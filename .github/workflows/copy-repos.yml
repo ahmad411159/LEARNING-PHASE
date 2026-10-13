@@ -1,0 +1,45 @@
+name: Copy learning repositories
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  copy-repositories:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out LEARNING-PHASE
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Copy repository files into folders
+        shell: bash
+        run: |
+          set -euo pipefail
+          repos=("Html-Task" "My-Web" "Css" "Ecom_Web" "Birth-DAy" "Netflix" "HBD")
+
+          for repo in "${repos[@]}"; do
+            echo "Copying $repo..."
+            rm -rf "/tmp/source-$repo"
+            git clone --depth 1 "https://github.com/ahmad411159/$repo.git" "/tmp/source-$repo"
+            mkdir -p "$repo"
+            cp -a "/tmp/source-$repo/." "$repo/"
+            rm -rf "$repo/.git"
+          done
+
+      - name: Commit copied files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- Html-Task My-Web Css Ecom_Web Birth-DAy Netflix HBD
+          if git diff --cached --quiet; then
+            echo "No file changes to commit."
+            exit 0
+          fi
+          git commit -m "Copy project files into LEARNING-PHASE"
+          git push origin HEAD:main
